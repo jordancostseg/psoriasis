@@ -1,454 +1,401 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TN ED Patient Hold Decision Guide</title>
+    <title>Psoriasis: A Clinician's Guide to Patient Realities</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Slate & Amber Neutrals -->
-    <!-- Application Structure Plan: The SPA is designed as an interactive decision-support tool for ED physicians. The structure is task-oriented, not a linear summary of the law. It starts with the most critical decision point: 'Psychiatric vs. Medical Incapacity'. This binary choice immediately directs the user down one of two distinct, interactive pathways. Each pathway ('Psychiatric Hold Protocol' and 'Medical Incapacity Protocol') is a self-contained module with interactive checklists and flow diagrams built with HTML/CSS. This structure was chosen because it directly mirrors the physician's workflow and clarifies the most common point of confusion, preventing misapplication of the law. The user can easily toggle between the main pathways, reinforcing the legal separation. A new top-level tab has been added to provide the full text of the legal analysis without cluttering the primary decision tool. -->
+    <!-- Chosen Palette: Clinical Calm -->
+    <!-- Application Structure Plan: A dual-perspective SPA designed for a psychiatrist. The structure juxtaposes formal clinical guidelines (UpToDate) with lived patient experiences (Reddit) across the full treatment spectrum. Key sections include: Foundational Care, Topical Therapies, Phototherapy, Systemic Non-Biologics, and a new detailed section on Biologics. A dedicated 'Beyond the Skin' section focuses on psychosocial comorbidities, directly addressing the psychiatrist's perspective. This side-by-side structure is chosen to help a clinician quickly synthesize the 'what' (clinical data) with the 'why' and 'how' (patient reality), fostering a more empathetic and effective therapeutic alliance. -->
     <!-- Visualization & Content Choices: 
-        - Report Info: Distinguishing Title 33 (Psychiatric) vs. Title 68 (Medical). Goal: Guide decision-making. Viz/Method: Interactive buttons to select a pathway. Interaction: Click to reveal the relevant legal protocol. Justification: Provides a clear, immediate fork in the decision tree, which is the core of the user's problem. Library/Method: Vanilla JS and Tailwind CSS.
-        - Report Info: TCA § 33-6-401/403 criteria. Goal: Ensure all legal criteria for a psychiatric hold are met. Viz/Method: Interactive checklist built with HTML/CSS. Interaction: User clicks each item to confirm they have evidence. An alert appears if criteria are not met. Justification: Converts abstract legal text into a practical, actionable tool, reducing the risk of improper detention. Library/Method: Vanilla JS and Tailwind CSS.
-        - Report Info: TCA § 68-11-1801 et seq. (HCDA). Goal: Guide the process of finding a surrogate for a medically incapacitated patient. Viz/Method: A cascading, interactive HTML/CSS diagram representing the legal hierarchy. Interaction: Clicking a level reveals details and requirements. Justification: Visually simplifies the complex "waterfall" hierarchy, making it much easier to follow than plain text. Library/Method: Vanilla JS and Tailwind CSS.
-        - Report Info: The entire legal workflow from ED to court. Goal: Show the full context and gravity of initiating a psychiatric hold. Viz/Method: A multi-step process flow diagram built with HTML/CSS flexbox. Interaction: Hovering over a step reveals more details. Justification: Provides a bird's-eye view of the legal journey, emphasizing that the ED physician's action is just the first step in a judicial process. Library/Method: Vanilla JS and Tailwind CSS.
-    -->
+        1. Treatment Spectrum: Goal: Organize. Viz: HTML/CSS side-by-side cards. Interaction: Click to expand details. Justification: Allows direct comparison between clinical and patient views for each treatment modality. Library: HTML/CSS.
+        2. OTC Brand Trust: Goal: Compare. Viz: Horizontal Bar Chart. Interaction: Tooltips. Justification: Retained from v1 as it effectively visualizes community consensus on accessible care. Library: Chart.js/Canvas.
+        3. Biologic Classes: Goal: Inform. Viz: Tabbed content area. Interaction: Click tabs to switch between biologic classes (Anti-TNF, Anti-IL-17, etc.). Justification: Organizes complex information into digestible chunks. Library: HTML/CSS/JS.
+        4. Psychosocial Impact: Goal: Inform/Compare. Viz: Side-by-side text blocks. Interaction: Static. Justification: Directly contrasts clinical descriptions of depression/anxiety with powerful patient quotes to maximize impact for a psychiatrist. Library: HTML/CSS.
+        5. Dietary Beliefs vs. Evidence: Goal: Compare. Viz: Two-column layout. Justification: Clearly separates strongly held patient beliefs from the current state of clinical evidence. Library: HTML/CSS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* slate-50 */
-            color: #334155; /* slate-700 */
+            background-color: #F8F9FA;
+            color: #343A40;
         }
-        .main-tab-button.active {
-            border-bottom-color: #4f46e5; /* indigo-600 */
-            color: #1e293b; /* slate-800 */
+        :root {
+            --bg-color: #F8F9FA;
+            --text-color: #343A40;
+            --primary-accent: #4A90E2; /* A professional blue */
+            --secondary-accent: #E9ECEF;
+            --heading-color: #212529;
+            --card-bg: #FFFFFF;
+            --card-border: #DEE2E6;
+            --highlight-text: #0056b3;
+            --patient-view-bg: #F1F3F5;
+            --clinical-view-bg: #E7F5FF;
         }
-        .nav-button {
-            transition: all 0.2s ease-in-out;
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
         }
-        .nav-button.active {
-            background-color: #4338ca; /* indigo-700 */
-            color: white;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
         }
-        .nav-button.active h3, .nav-button.active p, .nav-button.active div {
-            color: white;
+        .nav-link {
+            position: relative;
+            transition: color 0.3s ease;
         }
-        .content-section, .main-content-section {
-            display: none;
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary-accent);
+            transition: width 0.3s ease;
         }
-        .content-section.active, .main-content-section.active {
-            display: block;
+        .nav-link.active, .nav-link:hover {
+            color: var(--highlight-text);
         }
-        .flow-step {
+        .nav-link.active::after, .nav-link:hover::after {
+            width: 100%;
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .tab-button {
             transition: all 0.3s ease;
-            border-left-width: 4px;
         }
-        .flow-step:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        .tab-button.active {
+            border-color: var(--primary-accent);
+            background-color: var(--primary-accent);
+            color: white;
         }
-        .checklist-item {
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .checklist-item.checked {
-            background-color: #eef2ff; /* indigo-50 */
-            border-color: #4338ca; /* indigo-700 */
-            text-decoration: line-through;
-            color: #64748b; /* slate-500 */
-        }
-        .sub-tab-button.active {
-            border-bottom-color: #4338ca; /* indigo-700 */
-            color: #1e293b; /* slate-800 */
-            font-weight: 600;
-        }
-        #content-report h2 { font-size: 1.875rem; font-weight: 700; margin-top: 2rem; margin-bottom: 1rem; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-        #content-report h3 { font-size: 1.5rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #334155; }
-        #content-report h4 { font-size: 1.25rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: #475569; }
-        #content-report p { margin-bottom: 1rem; line-height: 1.6; }
-        #content-report ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
-        #content-report table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-        #content-report th, #content-report td { border: 1px solid #cbd5e1; padding: 0.75rem; text-align: left; }
-        #content-report th { background-color: #f1f5f9; }
-        #content-report strong { font-weight: 600; color: #1e293b; }
     </style>
 </head>
 <body class="antialiased">
-    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+    <header id="header" class="bg-[var(--bg-color)]/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-[var(--highlight-text)]">Psoriasis: Clinical & Patient Views</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#spectrum" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-[var(--text-color)]">Treatment Spectrum</a>
+                        <a href="#beyond-skin" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-[var(--text-color)]">Beyond the Skin</a>
+                        <a href="#diet-lifestyle" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-[var(--text-color)]">Diet & Lifestyle</a>
+                    </div>
+                </div>
+                 <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-[var(--text-color)] hover:text-white hover:bg-[var(--primary-accent)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg-color)] focus:ring-white">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+            </div>
+             <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#spectrum" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-[var(--text-color)]">Treatment Spectrum</a>
+                    <a href="#beyond-skin" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-[var(--text-color)]">Beyond the Skin</a>
+                    <a href="#diet-lifestyle" class="nav-link block px-3 py-2 rounded-md text-base font-medium text-[var(--text-color)]">Diet & Lifestyle</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         
-        <header class="text-center mb-6">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">ED Patient Hold Decision Guide</h1>
-            <p class="mt-2 text-lg text-slate-600">A simplified guide to Tennessee patient holds for ED physicians.</p>
-        </header>
+        <section class="text-center px-4 py-12 lg:py-16 fade-in">
+            <h2 class="text-4xl font-bold tracking-tight text-red-500">FOR DR. M ❤️</h2>
+            <h3 class="mt-4 text-3xl font-bold tracking-tight text-[var(--heading-color)] sm:text-4xl">Bridging Clinical Guidelines and Patient Realities in Psoriasis Care</h3>
+            <p class="mt-4 max-w-3xl mx-auto text-lg text-[var(--text-color)]">This tool synthesizes formal UpToDate clinical data with "real-world" patient perspectives from online communities to provide a holistic view of psoriasis management, with a special focus on the psychosocial dimensions relevant to psychiatry.</p>
+        </section>
 
-        <div class="border-b border-slate-200 mb-8">
-            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                <button class="main-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-base text-slate-500 hover:text-slate-700" data-main-tab="guide">Decision Guide</button>
-                <button class="main-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-base text-slate-500 hover:text-slate-700" data-main-tab="report">Full Report Text</button>
-            </nav>
-        </div>
-
-        <main>
-            <div id="content-guide" class="main-content-section">
-                <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                    <h2 class="text-2xl font-semibold text-slate-800 mb-4">Initial Assessment: What is the primary cause of the patient's condition?</h2>
-                    <div class="mb-6 text-sm text-red-800 bg-red-100 border-l-4 border-red-600 p-4 rounded-md shadow-sm">
-                        <p><strong>Regarding Drugs or Alcohol Intoxication:</strong> A patient incapacitated by **acute drug or alcohol intoxication** has a medical/toxicological condition. This requires a **Medical Incapacity (Title 68)** evaluation, NOT a Psychiatric (Title 33 / "6401") Hold. The psychiatric hold is reserved for cases where the danger is caused by an underlying psychiatric illness (e.g., schizophrenia, major depression).</p>
-                    </div>
-                    <p class="mb-6 text-slate-600">This is the most critical decision point. The patient's presentation dictates the correct legal pathway. The two pathways—Psychiatric vs. Medical—are legally distinct and mutually exclusive. Choose the path that best describes the root cause of the patient's incapacity or dangerousness.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <button id="nav-psych" class="nav-button p-6 text-left bg-slate-100 hover:bg-slate-200 rounded-lg border-2 border-transparent hover:border-indigo-600">
-                            <h3 class="font-bold text-xl text-slate-800">Psychiatric Crisis</h3>
-                            <p class="mt-2 text-slate-600">The patient's dangerousness is caused by an underlying <strong>mental illness</strong> (e.g., schizophrenia, major depression, bipolar disorder) leading to acute suicidal/homicidal ideation or severe impairment.</p>
-                            <div class="mt-4 font-semibold text-indigo-700">➔ Use Title 33 Protocol</div>
-                        </button>
-                        <button id="nav-medical" class="nav-button p-6 text-left bg-slate-100 hover:bg-slate-200 rounded-lg border-2 border-transparent hover:border-indigo-600">
-                            <h3 class="font-bold text-xl text-slate-800">Medical Incapacity</h3>
-                            <p class="mt-2 text-slate-600">The patient lacks decision-making capacity due to a <strong>medical or toxicological condition</strong>. This includes **acute intoxication**, sepsis, UTI, delirium, dementia, or head injury.</p>
-                            <div class="mt-4 font-semibold text-indigo-700">➔ Use Title 68 Protocol</div>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="content-psych" class="content-section mt-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                        <h2 class="text-2xl font-bold text-indigo-800 mb-2">Psychiatric Hold Protocol (TCA Title 33)</h2>
-                        <p class="mb-6 text-slate-600">This pathway is a formal legal process that initiates a potential court-ordered commitment. It requires strict adherence to statutory criteria documented on Form MH-5542.</p>
-                        
-                        <div class="border-b border-slate-200 mb-6">
-                            <nav class="flex space-x-4 -mb-px" aria-label="Tabs">
-                                <button class="sub-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500" data-sub-tab="psych-checklist">Interactive 6401/6404 Checklist</button>
-                                <button class="sub-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500" data-sub-tab="psych-flow">Commitment Process Flow</button>
-                            </nav>
-                        </div>
-
-                        <div id="tab-psych-checklist" class="sub-tab-content">
-                            <h3 class="text-xl font-semibold text-slate-700 mb-4">Step 1: The "6401" Emergency Detention Criteria</h3>
-                            <p class="mb-4 text-sm text-slate-500">To initiate an emergency detention for evaluation, you must have reason to believe BOTH of the following are true. Click each item to confirm.</p>
-                            <div class="space-y-4">
-                                <div id="check1" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon"></div>
-                                    <div>
-                                        <p class="font-semibold text-slate-800">The person has a mental illness or serious emotional disturbance.</p>
-                                        <p class="text-sm text-slate-500">(Includes psychiatric disorders, alcohol dependence, or drug dependence. Does NOT include intellectual disabilities.)</p>
-                                    </div>
-                                </div>
-                                <div id="check2" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon"></div>
-                                    <div>
-                                        <p class="font-semibold text-slate-800">The person poses an imminent substantial likelihood of serious harm <span class="font-bold text-red-600">BECAUSE OF</span> the mental illness.</p>
-                                        <p class="text-sm text-slate-500">(Harm includes threats/attempts of suicide/homicide, or inability to avoid severe impairment from specific risks.)</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <h3 class="text-xl font-semibold text-slate-700 mt-8 mb-4">Step 2: The "6404" Certificate of Need Criteria</h3>
-                            <p class="mb-4 text-sm text-slate-500">If the "6401" criteria are met, your examination must support ALL FOUR of these points to complete the first Certificate of Need for admission.</p>
-                            <div class="space-y-4">
-                                <div id="check3" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon">✓</div>
-                                    <p class="font-semibold text-slate-800">1. Has a mental illness or serious emotional disturbance.</p>
-                                </div>
-                                <div id="check4" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon">✓</div>
-                                    <p class="font-semibold text-slate-800">2. Poses imminent substantial likelihood of serious harm BECAUSE OF the illness.</p>
-                                </div>
-                                <div id="check5" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon">✓</div>
-                                    <p class="font-semibold text-slate-800">3. Needs care, training, or treatment BECAUSE OF the illness.</p>
-                                </div>
-                                <div id="check6" class="checklist-item p-4 border border-slate-300 rounded-lg flex items-center">
-                                    <div class="mr-4 flex-shrink-0 h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center check-icon">✓</div>
-                                    <p class="font-semibold text-slate-800">4. All available less drastic alternatives are unsuitable.</p>
-                                </div>
-                            </div>
-
-                            <div id="psych-alert" class="hidden mt-6 text-sm text-red-700 bg-red-100 border-l-4 border-red-500 p-4 rounded-md shadow-sm">
-                                <p><strong>Action Required:</strong> You must be able to document specific facts supporting all checked items on Form MH-5542. If you cannot confirm all required criteria, this is not a valid psychiatric hold. Re-evaluate if the Medical Incapacity pathway is more appropriate.</p>
-                            </div>
-                        </div>
-
-                        <div id="tab-psych-flow" class="sub-tab-content hidden">
-                             <h3 class="text-xl font-semibold text-slate-700 mb-1">The Journey of a Psychiatric Hold</h3>
-                             <p class="mb-6 text-sm text-slate-500">Initiating a hold is the first step in a formal legal process. Here is the typical sequence of events.</p>
-                             <div class="space-y-3">
-                                 <div class="flow-step border-indigo-500 bg-white p-4 rounded-r-lg shadow-sm flex items-start space-x-4">
-                                    <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xl font-bold">1</div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-slate-800">ED Physician Initiates Hold</h4>
-                                        <p class="text-slate-600">The ED Physician documents the "6401" criteria on Part 1 of Form MH-5542, then completes the first "6404" Certificate of Need on Part 2 after examination.</p>
-                                    </div>
-                                 </div>
-                                 <div class="flow-step border-slate-300 bg-slate-50 p-4 rounded-r-lg flex items-start space-x-4">
-                                    <div class="flex-shrink-0 w-12 h-12 bg-slate-400 text-white rounded-full flex items-center justify-center text-xl font-bold">2</div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-slate-800">Transport to Psychiatric Facility</h4>
-                                        <p class="text-slate-600">Patient is transported with the completed form to a psychiatric hospital or treatment resource for a second evaluation.</p>
-                                    </div>
-                                 </div>
-                                 <div class="flow-step border-slate-300 bg-slate-50 p-4 rounded-r-lg flex items-start space-x-4">
-                                    <div class="flex-shrink-0 w-12 h-12 bg-slate-400 text-white rounded-full flex items-center justify-center text-xl font-bold">3</div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-slate-800">Second Certificate of Need</h4>
-                                        <p class="text-slate-600">A second, independent qualified professional at the receiving facility examines the patient. If they concur, they complete the 2nd Certificate of Need (Part 3 of Form MH-5542).</p>
-                                    </div>
-                                 </div>
-                                 <div class="flow-step border-slate-300 bg-slate-50 p-4 rounded-r-lg flex items-start space-x-4">
-                                    <div class="flex-shrink-0 w-12 h-12 bg-slate-400 text-white rounded-full flex items-center justify-center text-xl font-bold">4</div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-slate-800">Notice to the Court</h4>
-                                        <p class="text-slate-600">With two certificates, the psychiatric facility files a Notice of Admission (Form MH-5098) with the General Sessions Court, formally starting the judicial process.</p>
-                                    </div>
-                                 </div>
-                                 <div class="flow-step border-slate-300 bg-slate-50 p-4 rounded-r-lg flex items-start space-x-4">
-                                    <div class="flex-shrink-0 w-12 h-12 bg-slate-400 text-white rounded-full flex items-center justify-center text-xl font-bold">5</div>
-                                    <div class="flex-grow">
-                                        <h4 class="font-bold text-slate-800">Judicial Review & Order</h4>
-                                        <p class="text-slate-600">A judge reviews the forms and, if there is probable cause, issues an Ex Parte Order (Form MH-5099) to hold the patient, appoint counsel, and set a court date.</p>
-                                    </div>
-                                 </div>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="content-medical" class="content-section mt-8">
-                    <div class="bg-white p-6 rounded-2xl shadow-lg border border-slate-200">
-                        <h2 class="text-2xl font-bold text-indigo-800 mb-2">Medical Incapacity Protocol (TCA Title 68)</h2>
-                        <p class="mb-6 text-slate-600">This pathway is used when a patient cannot make decisions due to a medical condition. The goal is not court commitment, but obtaining lawful consent for treatment from a surrogate. This is the basis for a "Medical Hold".</p>
-                        <p class="mb-6 font-semibold text-slate-800">A "Medical Hold" is legally justified by two components: 1) A documented finding of incapacity, and 2) Documented consent from a legal surrogate.</p>
-
-                         <div class="border-b border-slate-200 mb-6">
-                            <nav class="flex space-x-4 -mb-px" aria-label="Tabs">
-                                <button class="sub-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500" data-sub-tab="medical-checklist">Incapacity & Surrogate Checklist</button>
-                                <button class="sub-tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-slate-500" data-sub-tab="medical-flow">Surrogate Hierarchy</button>
-                            </nav>
-                        </div>
-
-                        <div id="tab-medical-checklist" class="sub-tab-content">
-                            <h3 class="text-xl font-semibold text-slate-700 mb-4">Physician's Duty Checklist</h3>
-                            <p class="mb-4 text-sm text-slate-500">Follow these steps to legally manage a medically incapacitated patient. Proper documentation in the medical record is essential.</p>
-                            <ul class="space-y-4">
-                                <li class="p-4 bg-slate-50 border-l-4 border-slate-400 rounded-r-md">
-                                    <h4 class="font-semibold text-slate-800">1. Determine and Document Incapacity</h4>
-                                    <p class="mt-1 text-slate-600">Perform a capacity assessment. Document in the medical record your specific findings that the patient cannot understand the risks, benefits, and alternatives to care.</p>
-                                </li>
-                                <li class="p-4 bg-slate-50 border-l-4 border-slate-400 rounded-r-md">
-                                    <h4 class="font-semibold text-slate-800">2. Identify a Surrogate Decision-Maker</h4>
-                                    <p class="mt-1 text-slate-600">Follow the legal hierarchy to find a surrogate. Document all attempts to contact them.</p>
-                                </li>
-                                <li class="p-4 bg-slate-50 border-l-4 border-slate-400 rounded-r-md">
-                                    <h4 class="font-semibold text-slate-800">3. Obtain and Document Informed Consent</h4>
-                                    <p class="mt-1 text-slate-600">Once a surrogate is identified, explain the situation and obtain their consent for admission and treatment. Document this consent conversation in the medical record. This provides the legal basis to hold the patient.</p>
-                                </li>
-                                 <li class="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-md">
-                                    <h4 class="font-semibold text-amber-900">4. If No Surrogate is Reasonably Available...</h4>
-                                    <p class="mt-1 text-amber-800">The law provides a backup. You MUST do one of the following: <strong>A)</strong> Get concurrence from a second, independent physician, OR <strong>B)</strong> Consult the hospital's ethics committee. Document this consultation.</p>
-                                </li>
-                            </ul>
-                        </div>
-                        
-                        <div id="tab-medical-flow" class="sub-tab-content hidden">
-                            <h3 class="text-xl font-semibold text-slate-700 mb-1">Surrogate Decision-Maker Hierarchy</h3>
-                            <p class="mb-6 text-sm text-slate-500">You must follow this order of priority when seeking a surrogate. You cannot skip a level unless no one in that category is reasonably available.</p>
-                            <div class="space-y-2">
-                                <div class="p-4 rounded-lg bg-indigo-100 border border-indigo-300"><p><span class="font-bold text-indigo-800">1. Health Care Agent</span> (in a durable power of attorney for health care)</p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">2. Judicially Appointed Guardian</span></p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">3. Spouse</span> (unless legally separated)</p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">4. Adult Child</span></p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">5. Parent</span></p></div>
-                                 <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">6. Adult Sibling</span></p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">7. Other Adult Relative</span></p></div>
-                                <div class="p-4 rounded-lg bg-slate-50 border border-slate-300"><p><span class="font-bold text-slate-800">8. Other Adult with special care/concern for patient</span></p></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="space-y-24 md:space-y-32">
             
-            <div id="content-report" class="main-content-section bg-white p-6 md:p-10 rounded-2xl shadow-lg border border-slate-200">
-                <h2>Section 1: The Psychiatric Involuntary Commitment Framework (Tennessee Code Title 33)</h2>
-                <p>Navigating the management of patients with acute psychiatric crises in the emergency department (ED) requires a precise understanding of a legal framework distinct from general medical care. In Tennessee, this process is governed by Title 33 of the Tennessee Code Annotated (TCA), which establishes a formal, multi-stage legal proceeding designed to protect the due process rights of the individual while allowing for necessary emergency intervention. This framework is not merely a clinical pathway but a legal one, initiated by specific forms and culminating in judicial oversight. Misunderstanding or misapplying these procedures can lead to significant legal liability for clinicians and their institutions. The process begins with an emergency detention for the purpose of evaluation and, if specific criteria are met, proceeds to a certification for involuntary admission.</p>
-                <h3>1.1 The Gateway to Evaluation: The § 33-6-401 Emergency Detention ("6401 Hold")</h3>
-                <p>The initial step in the emergency involuntary commitment process is the emergency detention, commonly referred to as a "6401 hold." This action is authorized under TCA § 33-6-401 and serves a single, specific purpose: to detain an individual against their will for the immediate purpose of a professional examination to determine if they require emergency involuntary admission. It is the legal gateway to a formal psychiatric assessment.</p>
-                <p>Critically, the statute establishes a strict, two-part legal test that must be met before a 6401 hold can be initiated. Both conditions are mandatory, and the presence of one without the other is insufficient to justify the detention.</p>
-                <ul>
-                    <li><strong>Presence of a Mental Illness or Serious Emotional Disturbance:</strong> The initiator must have reason to believe the person has a "mental illness" or "serious emotional disturbance." The statutory definition of "mental illness" is broad, encompassing "a psychiatric disorder, alcohol dependence, or drug dependence." However, the statute explicitly clarifies that this definition does not include intellectual or other developmental disabilities.</li>
-                    <li><strong>Imminent Harm <em>Because of</em> the Mental Illness:</strong> The person must pose an "imminent substantial likelihood of serious harm" as defined in TCA § 33-6-501. This harm must be a direct consequence of the mental illness or serious emotional disturbance. This causal link is the most crucial, and often most misunderstood, element of the standard. It is not enough for a patient to have a mental illness and separately be a danger; the danger must arise <em>from</em> the illness.</li>
-                </ul>
-                <h3>1.2 The Certification for Admission: The § 33-6-404 Certificate of Need ("6404")</h3>
-                <p>If the 6401 hold is the legal authorization to "detain for evaluation," the Certificate of Need (CON), or "6404," is the legal certification that results from that evaluation. It is the formal, professional opinion, documented on Form MH-5542, that the patient meets the statutory criteria for emergency involuntary <em>admission</em>. The first CON is typically completed in the ED and requires the professional to certify that four distinct criteria have been met:</p>
-                <ol>
-                    <li>The patient has a mental illness or serious emotional disturbance.</li>
-                    <li>The patient poses an imminent substantial likelihood of serious harm <em>because of</em> the mental illness.</li>
-                    <li>The patient needs care, training, or treatment <em>because of</em> the mental illness.</li>
-                    <li>All available less drastic alternatives to placement in a hospital or treatment resource are unsuitable to meet the needs of the person.</li>
-                </ol>
-                <h3>1.3 From ED to Courtroom: The Full Involuntary Admission Process</h3>
-                <p>The sequence of forms and procedures required under Title 33 makes it clear that an emergency involuntary commitment is not a private clinical matter. The ED physician's actions are the first, crucial steps in a formal judicial process that is carefully structured to protect the patient's constitutional rights to due process. The entire workflow is designed to move from a clinical setting to a legal one, with increasing levels of scrutiny, culminating in a judge's order to hold the patient.</p>
+            <section id="spectrum" class="px-4 py-16 scroll-mt-16">
+                <div class="text-center mb-16">
+                    <h3 class="text-3xl font-bold text-[var(--heading-color)]">The Treatment Spectrum</h3>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-[var(--text-color)]">From foundational self-care to advanced biologics, this section juxtaposes the clinical pathway with the patient's lived experience at each step.</p>
+                </div>
+
+                <div class="space-y-12">
+                    <!-- Foundational Care -->
+                    <div class="treatment-card bg-[var(--card-bg)] rounded-xl shadow-lg overflow-hidden">
+                        <h4 class="text-xl font-semibold text-white bg-[var(--primary-accent)] p-4">1. Foundational Care: Moisturization</h4>
+                        <div class="grid md:grid-cols-2 gap-px">
+                            <div class="p-6 bg-[var(--clinical-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Clinical View (UpToDate)</h5>
+                                <p>Daily skin moisturization with emollients (ointments, thick creams) is recommended to reduce pruritus and support the skin barrier, especially after bathing.</p>
+                            </div>
+                            <div class="p-6 bg-[var(--patient-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Patient View (Reddit)</h5>
+                                <p>This is a non-negotiable, three-step ritual: **Soak** (warm water, salts), apply topicals to **Damp Skin** (critical for absorption), and **Seal** with an occlusive (Vaseline, Aquaphor) to lock in moisture.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Topical Therapies -->
+                    <div class="treatment-card bg-[var(--card-bg)] rounded-xl shadow-lg overflow-hidden">
+                        <h4 class="text-xl font-semibold text-white bg-[var(--primary-accent)] p-4">2. Topical Therapies</h4>
+                         <div class="grid md:grid-cols-2 gap-px">
+                            <div class="p-6 bg-[var(--clinical-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Clinical View (UpToDate)</h5>
+                                <p>Topical corticosteroids are the mainstay. Potency is selected based on site and severity. Vitamin D analogs, calcineurin inhibitors, and newer agents (Tapinarof, Roflumilast) are key options, especially for steroid-sparing regimens.</p>
+                            </div>
+                            <div class="p-6 bg-[var(--patient-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Patient View (Reddit)</h5>
+                                <p>A tiered "arsenal." Daily maintenance with trusted OTC brands (CeraVe, Eucerin). Potent steroids ("big guns") are used cautiously for flares due to fear of side effects. Tacrolimus is "life-changing" for sensitive areas.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Phototherapy -->
+                    <div class="treatment-card bg-[var(--card-bg)] rounded-xl shadow-lg overflow-hidden">
+                        <h4 class="text-xl font-semibold text-white bg-[var(--primary-accent)] p-4">3. Phototherapy</h4>
+                         <div class="grid md:grid-cols-2 gap-px">
+                            <div class="p-6 bg-[var(--clinical-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Clinical View (UpToDate)</h5>
+                                <p>An effective option for moderate-to-severe disease. Narrowband UVB is common. Targeted phototherapy (e.g., excimer laser) is useful for localized plaques.</p>
+                            </div>
+                            <div class="p-6 bg-[var(--patient-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Patient View (Reddit)</h5>
+                                <p>Effective, but often "free but inconvenient." The requirement of 3-5 weekly clinic visits creates significant logistical and financial burdens, making it inaccessible for many working patients.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Systemic Non-Biologics -->
+                    <div class="treatment-card bg-[var(--card-bg)] rounded-xl shadow-lg overflow-hidden">
+                        <h4 class="text-xl font-semibold text-white bg-[var(--primary-accent)] p-4">4. Systemic Non-Biologics</h4>
+                         <div class="grid md:grid-cols-2 gap-px">
+                            <div class="p-6 bg-[var(--clinical-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Clinical View (UpToDate)</h5>
+                                <p>Includes methotrexate, acitretin, cyclosporine, and apremilast. Selection depends on comorbidities, patient preference, and disease severity. Requires monitoring for potential systemic adverse effects.</p>
+                            </div>
+                            <div class="p-6 bg-[var(--patient-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Patient View (Reddit)</h5>
+                                <p>Often seen as a mandatory "conveyor belt" or "escalation tier" to "prove failure" before biologics are approved by insurance. MTX is a "great cheap option," while Otezla is seen as "magic."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Biologics -->
+                    <div class="treatment-card bg-[var(--card-bg)] rounded-xl shadow-lg overflow-hidden">
+                        <h4 class="text-xl font-semibold text-white bg-[var(--primary-accent)] p-4">5. Biologic Therapies</h4>
+                         <div class="grid md:grid-cols-2 gap-px">
+                            <div class="p-6 bg-[var(--clinical-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Clinical View (UpToDate)</h5>
+                                <p>Targeted therapies for moderate-to-severe disease, including anti-TNF-alpha, anti-IL-17, and anti-IL-23 agents. Highly effective, with varying safety profiles and dosing schedules. Choice is guided by efficacy, safety, and patient-specific factors.</p>
+                            </div>
+                            <div class="p-6 bg-[var(--patient-view-bg)]">
+                                <h5 class="font-bold text-lg text-[var(--highlight-text)] mb-2">Patient View (Reddit)</h5>
+                                <p>The ultimate goal for many with severe disease. Seen as "life-changing" and offering freedom from the daily burden of topicals. The high cost and "scary" side effect warnings on TV are common topics of discussion and anxiety.</p>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                             <div class="border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                                    <button class="tab-button active whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm" data-tab="tnf">Anti-TNFα</button>
+                                    <button class="tab-button whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm" data-tab="il17">Anti-IL-17</button>
+                                    <button class="tab-button whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm" data-tab="il23">Anti-IL-23</button>
+                                </nav>
+                            </div>
+                            <div class="mt-4">
+                                <div class="tab-content" id="tnf">
+                                    <h6 class="font-semibold">Examples: Adalimumab (Humira), Etanercept (Enbrel)</h6>
+                                    <p class="mt-2 text-sm">Longest track record. Effective for both psoriasis and psoriatic arthritis. Patient concern often revolves around immunosuppression and injection site reactions.</p>
+                                </div>
+                                <div class="tab-content hidden" id="il17">
+                                    <h6 class="font-semibold">Examples: Secukinumab (Cosentyx), Ixekizumab (Taltz)</h6>
+                                    <p class="mt-2 text-sm">Known for rapid and high levels of skin clearance. Associated with a risk of candidiasis and caution is advised in patients with inflammatory bowel disease.</p>
+                                </div>
+                                <div class="tab-content hidden" id="il23">
+                                     <h6 class="font-semibold">Examples: Guselkumab (Tremfya), Risankizumab (Skyrizi)</h6>
+                                    <p class="mt-2 text-sm">Offer high efficacy and durable response with less frequent dosing (e.g., every 8-12 weeks), which is a major quality-of-life benefit for patients.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="beyond-skin" class="px-4 py-16 scroll-mt-16">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-[var(--heading-color)]">Beyond the Skin: The Psychiatric Dimension</h3>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-[var(--text-color)]">Psoriasis is a systemic inflammatory disease with significant psychiatric comorbidities. This section contrasts the clinical understanding of this link with the raw emotional experiences of patients.</p>
+                </div>
                 
-                <h2>Section 2: Managing the Medically Incapacitated Patient (Tennessee Code Title 68)</h2>
-                <p>A frequent and high-risk point of confusion in emergency medicine is how to legally manage a patient who lacks decision-making capacity due to a purely medical condition—such as severe intoxication, delirium from sepsis, metabolic encephalopathy, or a head injury—and wishes to leave against medical advice (AMA). The crucial determination for clinicians and hospital administrators is that the Title 33 psychiatric commitment process is the incorrect and legally indefensible framework for these patients. The correct and sole legal authority for this scenario is found in a completely different section of Tennessee law: Title 68, the Tennessee Health Care Decisions Act (HCDA).</p>
-                <h3>Table 1: At-a-Glance Comparison: Title 33 Psychiatric Hold vs. Title 68 Medical Incapacity</h3>
-                <table>
-                    <thead>
-                        <tr><th>Feature</th><th>Title 33 Psychiatric Hold</th><th>Title 68 Medical Incapacity</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr><td><strong>Legal Authority</strong></td><td>TCA Title 33, Ch. 6, Part 4</td><td>TCA Title 68, Ch. 11, Part 18 (Health Care Decisions Act)</td></tr>
-                        <tr><td><strong>Patient Population</strong></td><td>Patients with a "mental illness" or "serious emotional disturbance."</td><td>Patients with any medical condition causing temporary or permanent incapacity.</td></tr>
-                        <tr><td><strong>Triggering Condition</strong></td><td>"Imminent substantial likelihood of serious harm" <em>due to</em> the mental illness.</td><td>Lack of decision-making capacity <em>due to</em> the medical condition.</td></tr>
-                        <tr><td><strong>Key Legal Instrument</strong></td><td>Form MH-5542 (6401 Detention & 6404 Certificate of Need).</td><td>Physician's documented capacity assessment in the patient's medical record.</td></tr>
-                        <tr><td><strong>Basis for Treatment/Hold</strong></td><td>Two Certificates of Need from two separate qualified professionals.</td><td>Informed consent from a legally authorized surrogate decision-maker.</td></tr>
-                        <tr><td><strong>Role of Judiciary</strong></td><td>Mandatory and direct. The process culminates in court filings and a probable cause hearing.</td><td>None, unless a surrogate's decision or appointment is challenged in court.</td></tr>
-                    </tbody>
-                </table>
-                <h3>2.1 The Misapplication of Title 33: Why a 6401/6404 is Improper for Purely Medical Incapacity</h3>
-                <p>Using the Title 33 involuntary commitment process for a patient whose incapacity stems from a non-psychiatric medical condition is a serious legal error. The plain language of TCA § 33-6-401 requires that the "imminent substantial likelihood of serious harm" be <em>because of</em> a "mental illness or serious emotional disturbance". To complete a 6401/6404 form for a patient with delirium from a UTI, a physician would have to certify that the patient's condition is due to a mental illness, which is factually incorrect. This action constitutes making a false certification on a legal document and exposes the physician and the hospital to significant legal liability.</p>
-                <h3>2.2 The Correct Legal Authority: The Tennessee Health Care Decisions Act (HCDA)</h3>
-                <p>The proper legal pathway for making treatment decisions for an adult patient who is medically incapacitated is the Tennessee Health Care Decisions Act (HCDA). The law itself builds a firewall between the two statutory schemes, reinforcing that clinicians must choose one path or the other; they cannot be used interchangeably.</p>
-                <h3>2.4 Securing Lawful Consent: The Surrogate Decision-Maker Hierarchy</h3>
-                <p>Once a physician has determined that a patient lacks capacity, they have a legal duty under the HCDA to obtain informed consent from a legally authorized surrogate decision-maker. The HCDA establishes a mandatory "waterfall" or hierarchy of priority for identifying this surrogate:</p>
-                <ol>
-                    <li>Health Care Agent (in an advance directive)</li>
-                    <li>Judicially Appointed Guardian</li>
-                    <li>Spouse (unless legally separated)</li>
-                    <li>Adult Child</li>
-                    <li>Parent</li>
-                    <li>Adult Sibling</li>
-                    <li>Other Adult Relative</li>
-                    <li>Other Adult with special care and concern for the patient</li>
-                </ol>
-                <h3>2.6 The "Medical Hold": A Practical Application of Law</h3>
-                <p>The term "medical hold" is a piece of clinical jargon, not a legal term. It is the practical term for the lawful act of preventing a medically incapacitated patient from leaving the hospital against medical advice. A medical hold is legally justified by the combination of two documented facts: (1) A well-documented assessment by a physician that the patient lacks decision-making capacity, and (2) Lawful informed consent for admission and treatment obtained from the appropriate surrogate decision-maker.</p>
-                
-                <h2>Section 3: Navigating the Complexities of Acute Intoxication</h2>
-                <p>Patients presenting to the ED with acute intoxication represent one of the most challenging and legally ambiguous populations. A primary source of confusion stems from the statutory definition of "mental illness" in Title 33, which includes "alcohol dependence" and "drug dependence". A clinician might incorrectly conclude that a 6401 psychiatric hold is the appropriate tool.</p>
-                <p>This interpretation is generally incorrect and legally perilous. In the vast majority of cases involving acute intoxication, the patient's confusion, poor judgment, and lack of capacity are the direct, transient, pharmacological effects of the substance itself. This is a toxicological state, a medical condition, not a manifestation of the chronic disease of "dependence". Therefore, the proper legal framework is almost always medical incapacity under the Title 68 Health Care Decisions Act.</p>
-            </div>
-        </main>
-    </div>
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div class="bg-[var(--clinical-view-bg)] p-6 rounded-lg shadow-md">
+                        <h4 class="font-bold text-xl text-[var(--highlight-text)] mb-3">Clinical Perspective (UpToDate)</h4>
+                        <p class="mb-2">Psoriasis is associated with increased rates of depression, anxiety, and suicidal ideation. The visibility of lesions can impair social and occupational functioning.</p>
+                        <p>Effective treatment of psoriasis may reduce these psychosocial effects. Clinicians should assess for symptoms of anxiety and depression and refer for psychiatric evaluation when appropriate.</p>
+                    </div>
+                     <div class="bg-[var(--patient-view-bg)] p-6 rounded-lg shadow-md">
+                        <h4 class="font-bold text-xl text-[var(--highlight-text)] mb-3">Patient Reality (Reddit)</h4>
+                        <blockquote class="text-md italic text-[var(--text-color)] border-l-4 border-[var(--primary-accent)] pl-4 mb-4">
+                            "If someone could prove to me that cutting my hand off would cure me, I would do it. I'm just lost and close to giving up at this point."
+                        </blockquote>
+                         <blockquote class="text-md italic text-[var(--text-color)] border-l-4 border-[var(--primary-accent)] pl-4">
+                            "You have an irl debuff that can't be cured easily... friends and partners eventually tire out and leave you."
+                        </blockquote>
+                    </div>
+                </div>
+            </section>
+
+            <section id="diet-lifestyle" class="px-4 py-16 scroll-mt-16">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-[var(--heading-color)]">Diet & Lifestyle: Belief vs. Evidence</h3>
+                    <p class="mt-3 max-w-2xl mx-auto text-lg text-[var(--text-color)]">This area often represents the largest gap between patient practice and clinical guidance. Patients invest enormous effort into dietary and lifestyle changes based on personal experience and community consensus.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-start">
+                     <div class="bg-[var(--clinical-view-bg)] p-6 rounded-lg shadow-md">
+                        <h4 class="font-bold text-xl text-[var(--highlight-text)] mb-3">Clinical Evidence (UpToDate)</h4>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li><strong>High-quality evidence supports:</strong> Hypocaloric diet for weight reduction in overweight/obese patients; gluten-free diet for those with confirmed celiac disease.</li>
+                            <li><strong>Insufficient evidence for:</strong> Universal screening for gluten sensitivity, or routine use of supplements like fish oil, vitamin D, or B12.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-[var(--patient-view-bg)] p-6 rounded-lg shadow-md">
+                        <h4 class="font-bold text-xl text-[var(--highlight-text)] mb-3">Patient Doctrine (Reddit)</h4>
+                        <p class="mb-2">A core belief that psoriasis is an "issue originating from the gut." This drives meticulous self-tracking and elimination diets.</p>
+                        <p><strong>Most cited triggers:</strong> Gluten, dairy, sugar, and alcohol. Eliminating these is seen as a primary, empowering self-management strategy, regardless of clinical evidence.</p>
+                    </div>
+                </div>
+                 <div class="mt-16">
+                    <h4 class="text-2xl font-bold text-center mb-4 text-[var(--heading-color)]">Community-Cited Lifestyle Triggers</h4>
+                    <div class="chart-container">
+                        <canvas id="triggerChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <footer class="bg-[var(--card-bg)] mt-24 border-t border-[var(--card-border)]">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500">
+            <p>This interactive summary synthesizes data from UpToDate and the r/Psoriasis community to foster a deeper clinical understanding of the patient experience.</p>
+        </div>
+    </footer>
+
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const mainTabButtons = document.querySelectorAll('.main-tab-button');
-            const mainContentSections = document.querySelectorAll('.main-content-section');
+        document.addEventListener('DOMContentLoaded', function() {
             
-            const navPsych = document.getElementById('nav-psych');
-            const navMedical = document.getElementById('nav-medical');
-            const contentPsych = document.getElementById('content-psych');
-            const contentMedical = document.getElementById('content-medical');
-            const psychAlert = document.getElementById('psych-alert');
-            const checklistItems = document.querySelectorAll('.checklist-item');
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
 
-            function switchMainTab(tabId) {
-                mainTabButtons.forEach(button => {
-                    if (button.dataset.mainTab === tabId) {
-                        button.classList.add('active');
-                    } else {
-                        button.classList.remove('active');
-                    }
-                });
-                mainContentSections.forEach(section => {
-                    if (section.id === `content-${tabId}`) {
-                        section.classList.add('active');
-                    } else {
-                        section.classList.remove('active');
-                    }
-                });
-            }
-
-            mainTabButtons.forEach(button => {
+            tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    switchMainTab(button.dataset.mainTab);
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+
+                    const tabId = button.dataset.tab;
+                    tabContents.forEach(content => {
+                        content.classList.toggle('hidden', content.id !== tabId);
+                    });
                 });
             });
 
-            function showPsychContent() {
-                navPsych.classList.add('active');
-                navMedical.classList.remove('active');
-                contentPsych.classList.add('active');
-                contentMedical.classList.remove('active');
-                switchSubTab('psych-checklist', contentPsych);
-            }
+            const triggerCtx = document.getElementById('triggerChart').getContext('2d');
+            const triggerData = {
+                datasets: [{
+                    label: 'Psoriasis Triggers',
+                    data: [
+                        { x: 1, y: 3, r: 35, label: 'Gluten' },
+                        { x: 5, y: 7, r: 32, label: 'Dairy' },
+                        { x: 8, y: 2, r: 28, label: 'Stress' },
+                        { x: 12, y: 6, r: 25, label: 'Alcohol' },
+                        { x: 4, y: 11, r: 20, label: 'Sugar' },
+                        { x: 9, y: 10, r: 18, label: 'Nightshades' }
+                    ],
+                    backgroundColor: 'rgba(74, 144, 226, 0.6)',
+                    hoverBackgroundColor: 'rgba(74, 144, 226, 1)',
+                }]
+            };
 
-            function showMedicalContent() {
-                navMedical.classList.add('active');
-                navPsych.classList.remove('active');
-                contentMedical.classList.add('active');
-                contentPsych.classList.remove('active');
-                switchSubTab('medical-checklist', contentMedical);
-            }
-
-            navPsych.addEventListener('click', showPsychContent);
-            navMedical.addEventListener('click', showMedicalContent);
-
-            checklistItems.forEach(item => {
-                item.addEventListener('click', () => {
-                    item.classList.toggle('checked');
-                    const icon = item.querySelector('.check-icon');
-                    if (item.classList.contains('checked')) {
-                        icon.innerHTML = '✓';
-                        icon.classList.add('bg-indigo-600', 'text-white');
-                        icon.classList.remove('bg-slate-200');
-                    } else {
-                        icon.innerHTML = '';
-                        icon.classList.remove('bg-indigo-600', 'text-white');
-                        icon.classList.add('bg-slate-200');
+            const triggerChart = new Chart(triggerCtx, {
+                type: 'bubble',
+                data: triggerData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                             callbacks: {
+                                label: function(context) {
+                                    return context.raw.label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { display: false }
                     }
-                    checkPsychCriteria();
-                });
-            });
-
-            function checkPsychCriteria() {
-                const anyChecked = Array.from(checklistItems).some(item => item.classList.contains('checked'));
-                if (anyChecked) {
-                    psychAlert.classList.remove('hidden');
-                } else {
-                    psychAlert.classList.add('hidden');
                 }
-            }
-            
-            function switchSubTab(tabId, parentElement) {
-                const tabButtons = parentElement.querySelectorAll('.sub-tab-button');
-                const tabContents = parentElement.querySelectorAll('.sub-tab-content');
+            });
 
-                tabButtons.forEach(button => {
-                    if (button.dataset.subTab === tabId) {
-                        button.classList.add('active');
-                    } else {
-                        button.classList.remove('active');
+            const navLinks = document.querySelectorAll('nav a');
+            const sections = document.querySelectorAll('main section[id]');
+            const headerHeight = document.getElementById('header').offsetHeight;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            const linkHref = link.getAttribute('href');
+                            if (linkHref) {
+                                link.classList.toggle('active', linkHref.substring(1) === entry.target.id);
+                            }
+                        });
                     }
                 });
+            }, { rootMargin: `-${headerHeight}px 0px 0px 0px`, threshold: 0.3 });
 
-                tabContents.forEach(content => {
-                    if (content.id === `tab-${tabId}`) {
-                        content.classList.remove('hidden');
-                    } else {
-                        content.classList.add('hidden');
-                    }
-                });
-            }
-
-            document.querySelectorAll('.sub-tab-button').forEach(button => {
-                button.addEventListener('click', () => {
-                    const tabId = button.dataset.subTab;
-                    const parentSection = button.closest('.content-section');
-                    switchSubTab(tabId, parentSection);
-                });
+            sections.forEach(section => {
+                observer.observe(section);
             });
             
-            // Set initial state
-            switchMainTab('guide');
-            showPsychContent();
-            // Hide sub-sections initially until a main choice is made
-            contentPsych.classList.remove('active');
-            contentMedical.classList.remove('active');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const mobileNavLinks = document.querySelectorAll('#mobile-menu a');
+
+            mobileMenuButton.addEventListener('click', () => {
+                const isHidden = mobileMenu.classList.contains('hidden');
+                mobileMenu.classList.toggle('hidden', !isHidden);
+                mobileMenuButton.querySelector('svg.block').classList.toggle('hidden', !isHidden);
+                mobileMenuButton.querySelector('svg.hidden').classList.toggle('hidden', isHidden);
+            });
+            
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenuButton.querySelector('svg.block').classList.remove('hidden');
+                    mobileMenuButton.querySelector('svg.hidden').classList.add('hidden');
+                });
+            });
 
         });
     </script>
